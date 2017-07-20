@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block contenido %}
+    <div class="row blue lighten-1">
+        <div class="col s12 l8">
+            <a href="process" class="breadcrumb">Procesos</a>
+             <a href="fail" class="breadcrumb">{{ fail.process.name }}</a>
+            <a href="solutions" class="breadcrumb">{{ fail.name }}</a>
+        </div>
+    </div>
+    <div class="row">
+        <h3 class="center-align">Soluciones - Inspecciones</h3>
+    </div>
+    <div class="row">
+        {% if solutions and solutions|length > 0%}
+            <ul class="collection with-header">
+            <li class="collection-header"><h4>{{ fail.name }}</h4></li>
+                {% for solution in solutions %}
+                    <li class="collection-item">
+                        <div>{{ solution.name }}
+                            <a href="solution_step?id={{ solution.id }}" class="secondary-content tooltipped" data-position="bottom" data-delay="50" data-tooltip="Ver los pasos de solución">
+                                <i class="material-icons">send</i>
+                            </a>
+                            <a href="#modal{{ solution.id }}" class="secondary-content green-text tooltipped" data-position="bottom" data-delay="50" data-tooltip="Editar Solución">
+                                <i class="material-icons">edit</i>
+                            </a>
+                            <a href="#!" onclick="delete_solution({{ solution.id }})" class="secondary-content red-text tooltipped" data-position="bottom" data-delay="50" data-tooltip="Eliminar Solución">
+                                <i class="material-icons">delete</i>
+                            </a>
+                        </div>
+                    </li>
+                {% endfor %}
+          </ul>
+        {% else %}
+            <h4 class="red-text"> No hay soluciones registrados para el fallo</h4>
+        {% endif %}
+    </div>
+
+    <div class="row ">
+        <form class="col s12 l5 offset-l4" action="add_solution" method="post">
+            {% csrf_token %}
+            <input  type="hidden" class="validate" required name="fail" value="{{ fail.id }}">
+          <div class="row">
+            <div class="input-field col s12">
+                <input id="solutions" type="text" class="validate" required name="name">
+                <label for="solutions">Nombre de la solución</label>
+            </div>
+            <div class="input-field col s12">
+              <button class="btn waves-effect waves-light green" type="submit" name="action">Guardar
+                <i class="material-icons right">save</i>
+              </button>
+            </div>
+          </div>
+        </form>
+    </div>
+
+    <div class="row">
+        <div class="col l4 center-align offset-l4">
+            <a href="/" class="btn waves-effect blue">Salir<i class="material-icons right">home</i></a>
+        </div>
+    </div>
+
+
+        {% if solutions and solutions|length > 0%}
+            {% for solution in solutions %}
+                <div id="modal{{ solution.id }}" class="modal">
+                    <div class="modal-content">
+                        <form class="col s12 l5 offset-l4" action="edit_solution" method="post">
+                            {% csrf_token %}
+                            <input  type="hidden" class="validate" required name="id" value="{{ solution.id }}">
+                          <div class="row">
+                            <div class="input-field col s12">
+                                <input id="solutions{{ solution.id }}" type="text" class="validate" required name="name" value="{{ solution.name }}">
+                                <label for="solutions{{ solution.id }}">Nombre de la solución</label>
+                            </div>
+                            <div class="input-field col s12">
+                              <button class="btn waves-effect waves-light green" type="submit" >Guardar
+                                <i class="material-icons right">save</i>
+                              </button>
+                            </div>
+                          </div>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+
+
+{% endblock %}
+
+{% block init %}
+    {% if msg %}
+        $('.tooltipped').tooltip({delay: 50});
+        Materialize.toast('{{ msg }}', 4000)
+    {% endif %}
+    $('.modal').modal();
+{% endblock %}
+
+{% block script %}
+    function delete_solution(id){
+        var r = confirm("Desea eliminar la solución, recuerde que no se puede retroceder a esta accción?");
+        if (r == true) {
+            document.location='/delete_solution?id='+id
+        }
+    }
+{% endblock %}

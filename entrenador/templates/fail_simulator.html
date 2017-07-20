@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+
+{% block contenido %}
+    <div class="row blue lighten-1">
+        <div class="col s12 l8">
+            <a href="simulator_process" class="breadcrumb">Procesos</a>
+             <a href="fail" class="breadcrumb">{{ process.name }}</a>
+            <!--<a href="#!" class="breadcrumb">Soluciones</a>-->
+        </div>
+    </div>
+    <div class="row">
+        <h3 class="center-align">Modos de fallas</h3>
+    </div>
+    <div class="row">
+        {% if fails and fails|length > 0%}
+            <ul class="collection with-header">
+            <li class="collection-header"><h4>Proceso: {{ process.name }}</h4></li>
+                {% for fail in fails %}
+                    {% if fail.activo %}
+                        <li class="collection-item red white-text">
+                            <a href="#modal{{ fail.id }}" class="secondary-content white-text">
+                                <i class="material-icons">send</i>
+                            </a>
+                    {% else %}
+                        <li class="collection-item">
+
+                    {% endif %}
+                            {{ fail.name }}
+                        </li>
+                {% endfor %}
+          </ul>
+        {% else %}
+            <h4 class="red-text"> No hay fallos registrados</h4>
+        {% endif %}
+    </div>
+
+    <div class="row">
+        {% if fails and fails|length > 0%}
+            {% for fail in fails %}
+                <div class="col s1">
+                    {% if fail.activo %}
+                        <a class="btn-floating btn-large waves-effect waves-light red" data-tooltip="{{ fail.name }}">
+                        <img src="/static/img/on.png" class="responsive-img">
+                    {% else %}
+                        <a class="btn-floating btn-large waves-effect waves-light orange" href="eject_fail?id={{ fail.id }}" data-tooltip="{{ fail.name }}">
+                        <img src="/static/img/off.png" class="responsive-img">
+                    {% endif %}
+                        </a>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <div class="row">
+        <div class="col l4 center-align offset-l4">
+            <a href="/" class="btn waves-effect blue">Salir<i class="material-icons right">home</i></a>
+        </div>
+    </div>
+
+    <div class="row offset-l4">
+        <div class="col l5 offset-l9">
+        {% if alarma %}            
+            <a class="btn-floating btn-large waves-effect waves-light white" href="#" onclick="off_alarm()" data-tooltip="Apagar Alarma" id='btn_alarma'>
+                <img src="/static/img/sonido_on.png" class="responsive-img" id='img_alarma'>
+            </a>
+        {% else %}
+            <a class="btn-floating btn-large waves-effect waves-light white" href="#" data-tooltip="Prender Alarma" id='btn_alarma'>
+                <img src="/static/img/sonido_off.png" class="responsive-img" id='img_alarma'>
+            </a>
+        {% endif %}
+	{% if salida_auxiliar %}
+            <a class="btn-floating btn-large waves-effect waves-light" href="#" onclick="off_auxiliar()" data-tooltip="Apagar Auxiliar" id='btn_auxiliar'>
+                <img src="/static/img/off.png" class="responsive-img" id='img_auxiliar'>
+            </a>
+        {% else %}
+            <a class="btn-floating btn-large waves-effect waves-light" href="#" onclick="on_auxiliar()" data-tooltip="Prender Auxiliar" id='btn_auxiliar'>
+                <img src="/static/img/ledon.png" class="responsive-img" id='img_auxiliar'>
+            </a>
+        {% endif %}
+	{% if salida_auxiliar2 %}
+            <a class="btn-floating btn-large waves-effect waves-light" onclick="off_auxiliar2()" data-tooltip="Apagar Auxiliar" id='btn_auxiliar2'>
+                <img src="/static/img/off.png" class="responsive-img" id='img_auxiliar2'>
+            </a>
+        {% else %}
+            <a class="btn-floating btn-large waves-effect waves-light" onclick="on_auxiliar2()" data-tooltip="Prender Auxiliar" id='btn_auxiliar2'>
+                <img src="/static/img/ledon.png" class="responsive-img" id='img_auxiliar2'>
+            </a>
+        {% endif %}
+        
+        </div>        
+    </div>
+        {% if fails and fails|length > 0%}
+            {% for fail in fails %}
+                {% if fail.activo %}
+                    <div id="modal{{ fail.id }}" class="modal">
+                        <div class="modal-content">
+                            <h4>Falla: {{ fail.name }}</h4>
+                            <ul class="collapsible" data-collapsible="accordion">
+                                {% if solutions and solutions|length > 0 %}
+                                    {% for solution in solutions %}
+                                        {% if solution.fail.id == fail.id %}
+                                            <li>
+                                                <div class="collapsible-header">{{ solution.name }}</div>
+                                                <div class="collapsible-body">
+                                                    {% if steps  and steps|length > 0%}
+                                                        <div class="collection">
+                                                            {% for step in steps %}
+                                                                {% if step.solution.id == solution.id %}
+                                                                    <a href="#!" class="collection-item">{{ step.name }}</a>
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                        </div>
+                                                    {% endif %}
+
+                                                </div>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                            </ul>
+                            <a href="off_fail?id={{ fail.id }}" class="btn btn-large">Corregido</a>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+
+<div id="audio">
+    {% if alarma %}
+        <audio src="/static/audio/alarm3.wav" preload="auto" autoplay loop id="demo"></audio>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block init %}
+    {% if msg %}
+        $('.tooltipped').tooltip({delay: 50});
+        Materialize.toast('{{ msg }}', 4000)
+    {% endif %}
+    $('.modal').modal();
+    $('.tooltipped').tooltip({delay: 100});
+
+{% endblock %}
+
+{% block script %}
+
+function off_alarm(){
+    document.getElementById('demo').pause()
+    $.ajax({
+        type: 'GET',
+        url: 'off_alarm',
+        data: '',
+        success: function (data) {
+	    $('#img_alarma').attr('src', '/static/img/sonido_off.png');            
+        },
+        error: function(data) {
+            alert(data);
+        }
+    });
+    return false;
+}
+function on_auxiliar(){
+    $.ajax({
+        type: 'GET',
+        url: 'on_auxiliar',
+        data: '',
+        success: function (data) {
+	    $('#img_auxiliar').attr('src', '/static/img/off.png');
+            $('#btn_auxiliar').attr('onclick', 'off_auxiliar()');
+        },
+        error: function(data) {
+            alert(data);
+        }
+    });
+    return false;
+}
+function off_auxiliar(){
+    $.ajax({
+        type: 'GET',
+        url: 'off_auxiliar',
+        data: '',
+        success: function (data) {
+	    $('#img_auxiliar').attr('src', '/static/img/ledon.png');
+            $('#btn_auxiliar').attr('onclick', 'on_auxiliar()');
+        },
+        error: function(data) {
+            alert(data);
+        }
+    });
+    return false;
+}
+function on_auxiliar2(){
+    $.ajax({
+        type: 'GET',
+        url: 'on_auxiliar2',
+        data: '',
+        success: function (data) {
+	    $('#img_auxiliar2').attr('src', '/static/img/off.png');
+            $('#btn_auxiliar2').attr('onclick', 'off_auxiliar2()');
+        },
+        error: function(data) {
+            alert(data);
+        }
+    });
+    return false;
+}
+function off_auxiliar2(){
+    $.ajax({
+        type: 'GET',
+        url: 'off_auxiliar2',
+        data: '',
+        success: function (data) {
+	    $('#img_auxiliar2').attr('src', '/static/img/ledon.png');
+            $('#btn_auxiliar2').attr('onclick', 'on_auxiliar2()');
+        },
+        error: function(data) {
+            alert(data);
+        }
+    });
+    return false;
+}
+{% endblock %}

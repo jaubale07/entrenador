@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block contenido %}
+    <div class="row">
+        {% if process and process|length > 0 %}
+            <ul class="collection with-header">
+            <li class="collection-header"><h4>Procesos</h4></li>
+                {% for proces in process %}
+                    <li class="collection-item">
+                        <div>{{ proces.name }}
+                            <a href="fail_process?id={{ proces.id }}" class="secondary-content tooltipped" data-position="bottom" data-delay="50" data-tooltip="Ver los modos de falla">
+                                <i class="material-icons">send</i>
+                            </a>
+                            <a href="#modal{{ proces.id }}" class="secondary-content green-text tooltipped" data-position="bottom" data-delay="50" data-tooltip="Editar Proceso">
+                                <i class="material-icons">edit</i>
+                            </a>
+                            <a href="#!" onclick="delete_process({{ proces.id }})" class="secondary-content red-text tooltipped" data-position="bottom" data-delay="50" data-tooltip="Eliminar proceso">
+                                <i class="material-icons">delete</i>
+                            </a>
+                        </div>
+                    </li>
+                {% endfor %}
+          </ul>
+        {% else %}
+            <h4 class="red-text"> No hay Procesos registrados</h4>
+        {% endif %}
+    </div>
+
+    <div class="row ">
+        <form class="col s12 l5 offset-l4" action="add_process" method="post">
+            {% csrf_token %}
+          <div class="row">
+            <div class="input-field col s12">
+                <input id="process" type="text" class="validate" required name="name">
+                <label for="process">Nombre del proceso</label>
+            </div>
+            <div class="input-field col s12">
+              <button class="btn waves-effect waves-light green" type="submit" name="action">Guardar
+                <i class="material-icons right">save</i>
+              </button>
+            </div>
+          </div>
+        </form>
+    </div>
+    <div class="row">
+        <div class="col l4 center-align offset-l4">
+            <a href="/" class="btn waves-effect blue">Salir<i class="material-icons right">home</i></a>
+        </div>
+    </div>
+
+
+        {% if process and process|length > 0%}
+            {% for proces in process %}
+                <div id="modal{{ proces.id }}" class="modal">
+                    <div class="modal-content">
+                        <form class="col s12 l5 offset-l4" action="edit_process" method="post">
+                            {% csrf_token %}
+                            <input  type="hidden" class="validate" required name="id" value="{{ proces.id }}">
+                          <div class="row">
+                            <div class="input-field col s12">
+                                <input id="process{{ proces.id }}" type="text" class="validate" required name="name" value="{{ proces.name }}">
+                                <label for="process{{ proces.id }}">Nombre del proceso</label>
+                            </div>
+                            <div class="input-field col s12">
+                              <button class="btn waves-effect waves-light green" type="submit" >Guardar
+                                <i class="material-icons right">save</i>
+                              </button>
+
+                            </div>
+                          </div>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+
+
+{% endblock %}
+
+{% block init %}
+    {% if msg %}
+        $('.tooltipped').tooltip({delay: 50});
+        Materialize.toast('{{ msg }}', 4000)
+
+    {% endif %}
+    $('.modal').modal();
+{% endblock %}
+
+{% block script %}
+    function delete_process(id){
+        var r = confirm("Desea eliminar el proceso, recuerde que no se puede retroceder a esta accción?");
+        if (r == true) {
+            document.location='/delete_process?id='+id
+        }
+    }
+
+{% endblock %}

@@ -1,0 +1,293 @@
+{% extends 'base.html' %}
+
+{% block contenido %}
+    <div class="row">
+        {% if fails and fails|length > 0%}
+            <h4 class="blue-text"> Detector, Fallas del Proceso {{ process.name }}</h4>
+            <div class="collection">
+                {% for fail in fails %}
+                    <a id='fail_{{ fail.id }}' href="#modal{{ fail.id }}" class="collection-item">{{ fail.name }}</a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <h4 class="red-text"> No hay Fallas registrados para el proceso {{ process.name }}</h4>
+        {% endif %}
+    </div>
+
+    <div class="row">
+        <div class="col l4 center-align offset-l4">
+            <a href="/detector_process" class="btn waves-effect blue">Atras<i class="material-icons right">replay</i></a>
+            <a href="/" class="btn waves-effect blue">Salir<i class="material-icons right">home</i></a>
+        </div>
+    </div>
+    <div class="row offset-l4">
+        <div class="col l5 offset-l9">
+        {% if alarma %}
+            <a class="btn-floating btn-large waves-effect waves-light white" href="#" onclick="off_alarm();" data-tooltip="Apagar Alarma" id='btn_alarma'>
+                <img src="/static/img/sonido_on.png" class="responsive-img" id='img_alarma'>
+            </a>
+        {% else %}
+            <a class="btn-floating btn-large waves-effect waves-light white" href="#" data-tooltip="Prender Alarma" id='btn_alarma'>
+                <img src="/static/img/sonido_off.png" class="responsive-img" id='img_alarma'>
+            </a>
+        {% endif %}
+
+        {% if salida_auxiliar %}
+            <a class="btn-floating btn-large waves-effect waves-light" href="#" onclick="off_auxiliar();" data-tooltip="Apagar Auxiliar" id='btn_auxiliar'>
+                <img src="/static/img/off.png" class="responsive-img" id='img_auxiliar'>
+            </a>
+        {% else %}
+            <a class="btn-floating btn-large waves-effect waves-light" href="#" onclick="on_auxiliar();" data-tooltip="Prender Auxiliar" id='btn_auxiliar'>
+                <img src="/static/img/ledon.png" class="responsive-img" id='img_auxiliar'>
+            </a>
+        {% endif %}
+	{% if salida_auxiliar2 %}
+            <a class="btn-floating btn-large waves-effect waves-light" href="#" onclick="off_auxiliar2();" data-tooltip="Apagar Auxiliar" id='btn_auxiliar2'>
+                <img src="/static/img/off.png" class="responsive-img" id='img_auxiliar2'>
+            </a>
+        {% else %}
+            <a class="btn-floating btn-large waves-effect waves-light" href="#" onclick="on_auxiliar2();" data-tooltip="Prender Auxiliar" id='btn_auxiliar2'>
+                <img src="/static/img/ledon.png" class="responsive-img" id='img_auxiliar2'>
+            </a>
+        {% endif %}
+        </div>        
+    </div>
+
+
+    {% if fails and fails|length > 0%}
+            {% for fail in fails %}
+                <div id="modal{{ fail.id }}" class="modal">
+                    <div class="modal-content">
+                        <h4>Falla: {{ fail.name }}</h4>
+                        <ul class="collapsible" data-collapsible="accordion">
+                            {% if solutions and solutions|length > 0 %}
+                                {% for solution in solutions %}
+                                    {% if solution.fail.id == fail.id %}
+                                        <li>
+                                            <div class="collapsible-header">{{ solution.name }}</div>
+                                            <div class="collapsible-body">
+                                                {% if steps  and steps|length > 0%}
+                                                    <div class="collection">
+                                                        {% for step in steps %}
+                                                            {% if step.solution.id == solution.id %}
+                                                                <a href="#!" class="collection-item">{{ step.name }}</a>
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    </div>
+                                                {% endif %}
+
+                                            </div>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+<div id="audio">    
+    <audio src="/static/audio/alarm3.wav" preload="auto" loop id="demo"></audio>
+</div>
+{% endblock %}
+
+{% block init %}
+    {% if msg %}
+        $('.tooltipped').tooltip({delay: 50});
+        Materialize.toast('{{ msg }}', 4000);
+    {% endif %}
+    $('.modal').modal();
+    setInterval('reload({{ process.id }})', 5000);
+    setInterval('reload_alarma()', 5000);
+{% endblock %}
+
+{% block script %}
+function reload(process){
+    $.ajax({
+        type: 'GET',
+        url: 'get_fails_detection',
+        data: {'id':process},
+        success: function (data) {
+            for(i=0; i< data.length; i++)
+            {
+                if(data[i].fields.activo == true){
+                    $('#fail_'+data[i].pk).addClass('red');
+                }
+                else{
+                    $('#fail_'+data[i].pk).removeClass('red');
+                }
+            }
+        },
+        error: function(data) {
+            alert(data);
+        }
+    });
+    return false;
+}
+function reload_alarma(){
+    $.ajax({
+        type: 'GET',
+        url: 'get_estado_alarma',
+        data: '',
+        success: function (data) {
+            if(data === 'on'){
+                document.getElementById('demo').play();
+                $('#img_alarma').attr('src', '/static/img/sonido_on.png');
+                $('#btn_alarma').attr('onclick', 'off_alarm()');
+                $('#img_auxiliar').attr('src', '/static/img/off.png');
+                $('#btn_auxiliar').attr('onclick', 'off_auxiliar()');
+                $('#img_auxiliar2').attr('src', '/static/img/off.png');
+                $('#btn_auxiliar2').attr('onclick', 'off_auxiliar2()');
+            }
+            else if(data === '0'){
+                $('#img_alarma').attr('src', '/static/img/sonido_off.png');
+                document.getElementById('demo').pause();
+                $('#btn_alarma').attr('onclick', '');
+                $('#img_auxiliar').attr('src', '/static/img/off.png');
+                $('#btn_auxiliar').attr('onclick', 'off_auxiliar()');
+                $('#img_auxiliar2').attr('src', '/static/img/off.png');
+                $('#btn_auxiliar2').attr('onclick', 'off_auxiliar2()');
+            }
+            else if(data === '1'){
+                $('#img_alarma').attr('src', '/static/img/sonido_on.png');
+                document.getElementById('demo').play();
+                $('#btn_alarma').attr('onclick', 'off_alarm()');
+                $('#img_auxiliar').attr('src', '/static/img/off.png');
+                $('#btn_auxiliar').attr('onclick', 'off_auxiliar()');
+                $('#img_auxiliar2').attr('src', '/static/img/ledon.png');
+                $('#btn_auxiliar2').attr('onclick', 'on_auxiliar2()');
+            }
+	    else if(data === '2'){
+                $('#img_alarma').attr('src', '/static/img/sonido_on.png');
+                document.getElementById('demo').play();
+                $('#btn_alarma').attr('onclick', 'off_alarm()');
+                $('#img_auxiliar').attr('src', '/static/img/ledon.png');
+                $('#btn_auxiliar').attr('onclick', 'on_auxiliar()');
+                $('#img_auxiliar2').attr('src', '/static/img/off.png');
+                $('#btn_auxiliar2').attr('onclick', 'off_auxiliar2()');
+            }
+	    else if(data === '3'){
+                $('#img_alarma').attr('src', '/static/img/sonido_on.png');
+                document.getElementById('demo').play();
+                $('#btn_alarma').attr('onclick', 'off_alarm()');
+                $('#img_auxiliar').attr('src', '/static/img/ledon.png');
+                $('#btn_auxiliar').attr('onclick', 'on_auxiliar()');
+                $('#img_auxiliar2').attr('src', '/static/img/ledon.png');
+                $('#btn_auxiliar2').attr('onclick', 'on_auxiliar2()');
+            }
+	    else if(data === '4'){
+                $('#img_alarma').attr('src', '/static/img/sonido_off.png');
+                document.getElementById('demo').pause();
+                $('#btn_alarma').attr('onclick', '');
+                $('#img_auxiliar').attr('src', '/static/img/off.png');
+                $('#btn_auxiliar').attr('onclick', 'off_auxiliar()');
+                $('#img_auxiliar2').attr('src', '/static/img/ledon.png');
+                $('#btn_auxiliar2').attr('onclick', 'on_auxiliar2()');
+            }
+	    else if(data === '5'){
+                $('#img_alarma').attr('src', '/static/img/sonido_off.png');
+                document.getElementById('demo').pause();
+                $('#btn_alarma').attr('onclick', '');
+                $('#img_auxiliar2').attr('src', '/static/img/off.png');
+                $('#btn_auxiliar2').attr('onclick', 'off_auxiliar2()');
+                $('#img_auxiliar').attr('src', '/static/img/ledon.png');
+                $('#btn_auxiliar').attr('onclick', 'on_auxiliar()');
+            }
+            else{
+                $('#img_alarma').attr('src', '/static/img/sonido_off.png');
+                document.getElementById('demo').pause();
+                $('#btn_alarma').attr('onclick', '');
+                $('#img_auxiliar').attr('src', '/static/img/ledon.png');
+                $('#btn_auxiliar').attr('onclick', 'on_auxiliar()');
+                $('#img_auxiliar2').attr('src', '/static/img/ledon.png');
+                $('#btn_auxiliar2').attr('onclick', 'on_auxiliar2()');
+            }
+        },
+        error: function(data) {
+            alert(data);
+        }
+    });
+    return false;
+
+}
+function off_alarm(){
+    document.getElementById('demo').pause();
+    $.ajax({
+        type: 'GET',
+        url: 'off_alarm',
+        data: '',
+        success: function (data) {
+	    $('#img_alarma').attr('src', '/static/img/sonido_off.png');
+        },
+        error: function(data) {
+            alert(data);
+        }
+    });
+    return false;
+}
+function on_auxiliar(){
+    $.ajax({
+        type: 'GET',
+        url: 'on_auxiliar',
+        data: '',
+        success: function (data) {
+	    $('#img_auxiliar').attr('src', '/static/img/off.png');
+            //$('#btn_auxiliar').attr('href', '#');
+            $('#btn_auxiliar').attr('onclick', 'off_auxiliar()');
+
+        },
+        error: function(data) {
+            alert(data);
+        }
+    });
+    return false;
+}
+function off_auxiliar(){
+    $.ajax({
+        type: 'GET',
+        url: 'off_auxiliar',
+        data: '',
+        success: function (data) {
+	    $('#img_auxiliar').attr('src', '/static/img/ledon.png');
+            //$('#btn_auxiliar').attr('href', 'javascript:on_auxiliar();');
+            $('#btn_auxiliar').attr('onclick', 'on_auxiliar()');
+        },
+        error: function(data) {
+            alert(data);
+        }
+    });
+    return false;
+}
+function on_auxiliar2(){
+    $.ajax({
+        type: 'GET',
+        url: 'on_auxiliar2',
+        data: '',
+        success: function (data) {
+	    $('#img_auxiliar2').attr('src', '/static/img/off.png');
+            //$('#btn_auxiliar2').attr('href', 'javascript:off_auxiliar2();');
+            $('#btn_auxiliar2').attr('onclick', 'off_auxiliar2()');
+        },
+        error: function(data) {
+            alert(data);
+        }
+    });
+    return false;
+}
+function off_auxiliar2(){
+    $.ajax({
+        type: 'GET',
+        url: 'off_auxiliar2',
+        data: '',
+        success: function (data) {
+	    $('#img_auxiliar2').attr('src', '/static/img/ledon.png');
+            //$('#btn_auxiliar2').attr('href', 'javascript:on_auxiliar2();');
+            $('#btn_auxiliar2').attr('onclick', 'on_auxiliar2()');
+        },
+        error: function(data) {
+            alert(data);
+        }
+    });
+    return false;
+}
+{% endblock %}

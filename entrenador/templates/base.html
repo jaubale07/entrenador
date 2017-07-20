@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+{% load staticfiles %}
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Entrenador</title>
+    <link href="{% static 'css/material-icons.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/materialize.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <header>
+        <nav class="blue darken-1">
+            <div class="nav-wrapper container">
+                <a href="#!" class="brand-logo">Entrenador</a>
+                <a href="#" data-activates="mobile-demo" class="button-collapse"><i class="material-icons">menu</i></a>
+                <!--
+                <ul class="right hide-on-med-and-down">
+
+                    <li>
+                        <a href="/" class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="Gestionar Procesos"><i class="material-icons">settings</i></a>
+                    </li>
+                    <li>
+                        <a href="simulator_process" class="tooltipped" data-position="bottom" data-delay="50" data-tooltip="Simulador de fallas"><i class="material-icons">error</i></a>
+                    </li>
+                </ul>
+                -->
+                <ul class="side-nav" id="mobile-demo">
+                    <li>
+                        <a href="/" class="tooltipped" >Gestionar procesos<i class="material-icons right">settings</i></a>
+                    </li>
+                    <li>
+                        <a href="simulator_process" class="tooltipped">Simulador de fallas<i class="material-icons right">error</i></a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+            {% block title %}
+                {% endblock %}
+
+        <div class="container">
+
+                {% block contenido %}
+                {% endblock %}
+
+        </div>
+
+    </main>
+
+    <footer class="page-footer blue lighten-1">
+          <div class="footer-copyright blue">
+            <div class="container">
+            2017 © Copyright
+                <div class="right">
+                    <a class="grey-text text-lighten-4" href="http://ufps.edu.co">
+                        Universidad Internacional Iberoamericana
+                    </a>
+                </div>
+            </div>
+          </div>
+    </footer>
+    <script type="text/javascript" src="{% static 'js/jquery-2.1.4.min.js' %}"></script>
+    <script src="{% static 'js/materialize.min.js' %}"></script>
+    <script src="{% static 'js/socket.io.js' %}"></script>
+    <script>
+        var frm;
+
+        $(document).ready(function(){
+            $(".button-collapse").sideNav();
+            $(".button-collapse").collapsible();
+
+
+            {% block init %}
+
+            {% endblock %}
+        });
+
+        {% block script %}
+
+            {% endblock %}
+
+
+
+    </script>
+</body>
+</html>
